@@ -12,7 +12,7 @@ def getX_CSRF_TOKEN():
 
     url = "https://hackerone.com//opportunities/all"
     headers = CaseInsensitiveDict()
-    headers = {"Cookie": getCookies.host_session}
+    headers = {"Cookie": "__Host-session="+ getCookies.host_session}
 
     response = requests.get(url=url,headers=headers,allow_redirects=False,proxies=proxies, verify=False) 
 
@@ -27,6 +27,22 @@ def getX_CSRF_TOKEN():
     else:
         print("CSRF token not found.")
 
+
+    getPendingInvites()
+
+
+def getPendingInvites():
+
+    url = "https://hackerone.com/graphql"
+    body = {"operationName":"PrivateProgramInvitationsQuery","variables":{"count":1000,"orderBy":{"field":"invitation_expires_at","direction":"ASC"},"product_area":"opportunity_discovery","product_feature":"pending_invitations"},"query":"query PrivateProgramInvitationsQuery($count: Int, $orderBy: InvitationOrderInput, $cursor: String) {\n  me {\n    id\n    hacker_invitations_profile {\n      id\n      receive_invites\n      __typename\n    }\n    soft_launch_invitations(\n      first: $count\n      after: $cursor\n      state: open\n      order_by: $orderBy\n    ) {\n      pageInfo {\n        endCursor\n        hasNextPage\n        __typename\n      }\n      edges {\n        node {\n          id\n          expires_at\n          token\n          team {\n            id\n            handle\n            submission_requirements {\n              id\n              terms_required_at\n              mfa_required_at\n              __typename\n            }\n            ...TeamTableResponseEfficiency\n            ...TeamTableLaunchDate\n            ...TeamTableResolvedReports\n            ...TeamTableMinimumBounty\n            ...TeamTableAverageBounty\n            ...TeamTableAvatarAndTitle\n            __typename\n          }\n          ...InvitationLink\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}\n\nfragment TeamTableResponseEfficiency on Team {\n  id\n  response_efficiency_percentage\n  ...ResponseEfficiencyIndicator\n  __typename\n}\n\nfragment ResponseEfficiencyIndicator on Team {\n  id\n  response_efficiency_percentage\n  __typename\n}\n\nfragment TeamTableLaunchDate on Team {\n  id\n  launched_at\n  __typename\n}\n\nfragment TeamTableResolvedReports on Team {\n  id\n  resolved_report_count\n  __typename\n}\n\nfragment TeamTableMinimumBounty on Team {\n  id\n  currency\n  base_bounty\n  __typename\n}\n\nfragment TeamTableAverageBounty on Team {\n  id\n  currency\n  average_bounty_lower_amount\n  average_bounty_upper_amount\n  __typename\n}\n\nfragment TeamTableAvatarAndTitle on Team {\n  id\n  profile_picture(size: medium)\n  name\n  handle\n  submission_state\n  triage_active\n  publicly_visible_retesting\n  state\n  allows_bounty_splitting\n  external_program {\n    id\n    __typename\n  }\n  ...TeamLinkWithMiniProfile\n  __typename\n}\n\nfragment TeamLinkWithMiniProfile on Team {\n  id\n  handle\n  name\n  __typename\n}\n\nfragment InvitationLink on InvitationInterface {\n  ... on InvitationsSoftLaunch {\n    id\n    token\n    team {\n      id\n      handle\n      submission_requirements {\n        id\n        terms_required_at\n        mfa_required_at\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n  ... on InvitationsRetest {\n    id\n    token\n    accepted_at\n    team {\n      id\n      handle\n      submission_requirements {\n        id\n        terms_required_at\n        mfa_required_at\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\n"}
+ 
+    headers = CaseInsensitiveDict()
+    headers = {"x-csrf-token": getX_CSRF_TOKEN.x_csrf_token, "Cookie": "__Host-session="+ getCookies.host_session}
+
+
+    response = requests.post(url=url, json=body,headers=headers,allow_redirects=False,proxies=proxies, verify=False) 
+    if response.status_code == 200: 
+        print("response : ", response.content) 
 
 
 def main():
