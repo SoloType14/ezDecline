@@ -2,8 +2,9 @@ import requests
 from requests.structures import CaseInsensitiveDict
 import re
 
+#For debugging purposes
+proxies = {"http": "http://127.0.0.1:8080", "https": "http://127.0.0.1:8080"}
 
-proxies = {"http": "http://127.0.0.1:8081", "https": "http://127.0.0.1:8081"}
 def getCookies():
     getCookies.host_session = input("Please paste the value of your __Host-session here: ")
     getX_CSRF_TOKEN()
@@ -41,10 +42,45 @@ def getPendingInvites():
 
 
     response = requests.post(url=url, json=body,headers=headers,allow_redirects=False,proxies=proxies, verify=False) 
+
     if response.status_code == 200: 
-        print("response : ", response.content) 
+        data = response.json()
+
+        #Filter the json response
+
+        # Get the list of invitations from 'edges' inside 'soft_launch_invitations'
+        invitations = data['data']['me']['soft_launch_invitations']['edges']
+
+        #Ask for the REP value you want to decline
+        badREF = int(input("Enter the Response Efficiency Percentage you want to decline (downwards): "))
+
+        
+        # Filter the invitations where response_efficiency_percentage > 80
+        filtered_companies = [
+            invitation['node'] for invitation in invitations
+            if invitation['node']['team']['response_efficiency_percentage'] <= badREF
+        ]
+
+        # Extract and print the 'name', 'response_efficiency_percentage', and 'token' for each company
+        for company in filtered_companies:
+            name = company['team']['name']  # Company's name
+            response_rate = company['team']['response_efficiency_percentage']  # Response rate
+            token = company['token']  # Token will be used to decline the invitation later
+            
+            # Print the extracted values
+            print("All of the invitation from listed companies will be declined")
+
+            print(f"Company Name: {name}")
+            print(f"Response Rate: {response_rate}")
+            print('---')
+                
+
+    else:
+        print(f"Failed to retrieve list of invitation - Status code: {response.status_code}")
 
 
+
+        
 def main():
     getCookies()
 
